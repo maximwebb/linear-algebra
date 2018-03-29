@@ -20,7 +20,7 @@ function Matrix(row, col, items) {
 	this.verify();
 	this.genMat();
 
-	if (this.square) this.determinant = this.det();
+	if (this.square) this.determinant = +this.det().toFixed(6);
 }
 
 //Calculates certain properties of the Matrix and stores them as properties.
@@ -32,6 +32,7 @@ Matrix.prototype.verify = function() {
 
 //Takes the raw array passed to the constructor, and converts it into a structured matrix.
 Matrix.prototype.genMat = function() {
+	this.raw = this.raw.map(x => +x.toFixed(6));
 	this.mat = [];
 	for (incr = 0; incr < this.rowNum; incr++) {
 		this.mat.push([]);
@@ -132,8 +133,8 @@ Matrix.prototype.trn = function() {
 //Returns the inverse of a matrix - multiplies the transpose of the cofactor matrix by the determinant.
 Matrix.prototype.inv = function() {
 	if (!this.square) { console.error('Cannot invert a non-square matrix.'); return null;}
-	this.det();
-	return ((this.cfact()).trn()).multiply(this.determinant);
+	if (!this.determinant) this.det();
+	return ((this.cfact()).trn()).multiply(1/this.determinant);
 };
 
 //Constructor for Identity matrices.
