@@ -182,8 +182,8 @@ ZeroMatrix.prototype.constructor = ZeroMatrix;
 if(helperText) {
 	console.log('%cWelcome to this Matrix library!', 'color: #f44336; font-size: 200%; text-outline: 2px solid #2196F3; font-weight: 800pt; text-decoration: underline');
 	console.log(' ');
-	console.log('%cTo create a matrix, type "new Matrix({# of rows}, {# of columns}, {[values]})', 'font-size: 120%');
-	console.log('%cFor example, var myMat = new Matrix(3, 2, [4, 3, 7, 6, 1, 1]) produces the following object, with the matrix stored in .mat:', 'font-size: 120%');
+	console.log('%cTo create a matrix, type "new Matrix({# of rows}, {# of columns}, {[values]})"', 'font-size: 120%');
+	console.log('%cFor example, var myMat = new Matrix(3, 3, [4, 3, 7, 6, 1, 1, 2, 9, 5]) produces the following object, with the matrix stored in .mat:', 'font-size: 120%');
 	var myMat = new Matrix(3, 3, [4, 3, 7, 6, 1, 1, 2, 9, 5]);
 	console.log(' ');
 	console.log(myMat);
