@@ -1,5 +1,5 @@
 //Set to false to turn off helper text.
-var helperText = true;
+var helperText = false;
 
 //Returns a cloned array
 cloneArr = function(originArr) {
@@ -20,7 +20,7 @@ function Matrix(row, col, items) {
 	this.verify();
 	this.genMat();
 
-	if (this.square) this.determinant = +this.det().toFixed(6);
+	//if (this.square) this.determinant = +this.fastDet().toFixed(6);
 }
 
 //Calculates certain properties of the Matrix and stores them as properties.
@@ -59,7 +59,7 @@ Matrix.prototype.multiply = function(mt) {
 	for (p = 0; p < this.rowNum; p++) {
 		for (q = 0; q < mt.colNum; q++) {
 			for (r = 0; r < mt.rowNum; r++) {
-				rawArr[(p * this.rowNum) + q] += (this.mat[p][r] * mt.mat[r][q]);
+				rawArr[(p * mt.colNum) + q] += (this.mat[p][r] * mt.mat[r][q]);
 			}
 		}
 	}
@@ -102,6 +102,32 @@ Matrix.prototype.det = function(mt = this.mat) {
 	return res;
 };
 
+Matrix.prototype.fastDet = function() {
+	var start = new Date();
+	let determinant = 1;
+	let mt = new Matrix(this.rowNum, this.colNum, this.raw);
+
+	//Iterates the row being scaled.
+	for (let i = 0; i < mt.rowNum - 1; i++) {
+		//Iterates the row being added to.
+		for (let j = i + 1; j < mt.rowNum; j++) {
+			//Iterates the element along the row being added to.
+			let t = -(mt.mat[j][i]/mt.mat[i][i]);
+			for (let k = i; k < mt.rowNum; k++) {
+				mt.mat[j][k] += t * mt.mat[i][k];
+			}
+		}
+	}
+
+	for (let l = 0; l < mt.rowNum; l++) {
+		determinant *= mt.mat[l][l];
+	}
+
+	//mt.print();
+	console.log("Time taken: " + ((new Date() - start)/1000) + "s");
+	return determinant.toFixed(6);
+};
+
 //Returns the cofactor of a matrix.
 Matrix.prototype.cfact = function() {
 	cfactArr = [];
@@ -135,6 +161,19 @@ Matrix.prototype.inv = function() {
 	if (!this.square) { console.error('Cannot invert a non-square matrix.'); return null;}
 	if (!this.determinant) this.det();
 	return ((this.cfact()).trn()).multiply(1/this.determinant);
+};
+
+Matrix.prototype.print = function() {
+	for (let s = 0; s < this.rowNum; s++) {
+		let str = "|";
+
+		for (t = 0; t < this.colNum; t++) {
+			str += this.mat[s][t];
+			str += " ";
+		}
+		str += "|";
+		console.log(str);
+	}
 };
 
 //Constructor for Identity matrices.
@@ -178,6 +217,25 @@ function ZeroMatrix(row, col) {
 
 ZeroMatrix.prototype = Object.create(Matrix.prototype);
 ZeroMatrix.prototype.constructor = ZeroMatrix;
+
+//Constructor for Random Int Matrices.
+function RandomIntegerMatrix(row, col) {
+
+	this.raw = [];
+	this.mat = [];
+	for (let i = 0; i < row; i++) {
+		this.mat.push([]);
+		for (let j = 0; j < col; j++) {
+			let randInt = Math.floor(Math.random() * 100);
+			this.mat[i].push(randInt);
+			this.raw.push(randInt);
+		}
+	}
+	Matrix.call(this, row, col, this.raw);
+}
+
+RandomIntegerMatrix.prototype = Object.create(Matrix.prototype);
+RandomIntegerMatrix.prototype.constructor = RandomIntegerMatrix;
 
 
 if(helperText) {
