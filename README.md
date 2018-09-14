@@ -49,8 +49,10 @@ There are several methods that work exclusively on square matrices:
 
 **1.** ``Matrix.prototype.det(mt.mat)`` **Takes a matrix array and returns the determinant, storing it in the ``.determinant`` property.**
 
-**2.** ``Matrix.prototype.exp(n)`` **Exponentiates the matrix to n, where n is a real number. Returns a new matrix object.**
+**2.** ``Matrix.prototype.fastDet(mt.mat)`` **Same as above but calculates the determinant more quickly.**
 
-**3.** ``Matrix.prototype.cfact()`` **Returns the cofactor matrix as a new object.**
+**3.** ``Matrix.prototype.exp(n)`` **Exponentiates the matrix to n, where n is a real number. Returns a new matrix object.**
 
-**4.** ``Matrix.prototype.inv()`` **Returns the inverse of a matrix as new object.**
+**4.** ``Matrix.prototype.cfact()`` **Returns the cofactor matrix as a new object.**
+
+**5.** ``Matrix.prototype.inv()`` **Returns the inverse of a matrix as new object.**
