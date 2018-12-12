@@ -10,232 +10,225 @@ cloneArr = function(originArr) {
 };
 
 //General constructor for matrices. Requires the number of rows, columns and the raw values when creating a matrix.
-function Matrix(row, col, items) {
-	this.rowNum = row;
-	this.colNum = col;
-	this.raw = items;
+class Matrix extends Array {
+	constructor(row, col, items) {
+		super();
+		if (typeof(row) !== 'number') {
+			console.error('Row number must be an integer');
+			return undefined;
+		}
+		if (typeof(col) !== 'number') {
+			console.error('Column number must be an integer');
+			return undefined;
+		}
+		if (!Array.isArray(items)) {
+			console.error('Matrix element list must be an array');
+			return undefined;
+		}
 
-	this.valid;
-	this.square;
-	this.verify();
-	this.genMat();
 
-	//if (this.square) this.determinant = +this.fastDet().toFixed(6);
+
+		this.rowNum = row;
+		this.colNum = col;
+		this.raw = items;
+
+		for (let i = 0; i < this.rowNum; i++) {
+			this.push([]);
+			for (let j = 0; j < this.colNum; j++) {
+				this[i].push(items[i * this.colNum + j]);
+			}
+		}
+	}
+
+	static clone(m1) {
+		let arr = [];
+		for (let i = 0; i < m1.rowNum; i++) {
+			for (let j = 0; j < m1.colNum; j++) {
+				arr.push(m1[i][j]);
+			}
+		}
+		return new Matrix(m1.rowNum, m1.colNum, arr);
+	}
+
+	static add(m1, m2) {
+		if (m1.rowNum !== m2.rowNum || m1.colNum !== m2.colNum) {
+			console.error('Incompatible matrices.');
+		}
+		let tmpArr = [];
+		for (let i = 0; i < m1.rowNum; i++) {
+			for (let j = 0; j < m1.colNum; j++) {
+				tmpArr.push(m1[i][j] + m2[i][j]);
+			}
+		}
+
+		return new Matrix(tmpArr, m1.rowNum, m1.colNum);
+
+	}
+
+	static multiply(m1, m2) {
+		if (m1.colNum !== m2.rowNum) {
+			console.error('Incompatible matrices.');
+		}
+		let tmpArr = [];
+		for (let i = 0; i < m1.rowNum; i++) {
+			for (let j = 0; j < m2.colNum; j++) {
+				tmpArr.push(0);
+				for (let k = 0; k < m1.colNum; k++) {
+					tmpArr[i * m2.colNum + j] += m1[i][k] * m2[k][j];
+				}
+			}
+		}
+		return new Matrix(m1.rowNum, m2.colNum, tmpArr);
+	}
+
+	static scalarMultiply(m1, num) {
+		let m2 = this.clone(m1);
+		for (let i = 0; i < m1.rowNum; i++) {
+			for (let j = 0; j < m1.colNum; j++) {
+				m2[i][j] *= num;
+			}
+		}
+		return m2;
+	}
+
+	static determinant(m) {
+		if (m.rowNum !== m.colNum) {
+			console.error('Non-square matrix.');
+		}
+		let m1 = this.clone(m);
+		for (let i = 0; i < m1.colNum - 1; i++) {
+			for (let j = i + 1; j < m1.rowNum; j++) {
+				let multiplier = m1[j][i] / m1[i][i];
+				m1[j][i] = 0;
+				for (let k = i + 1; k < m1.colNum; k++) {
+					m1[j][k] = m1[j][k] - multiplier * m1[i][k];
+				}
+			}
+
+		}
+		let res = 1;
+		for (let i = 0; i < m1.rowNum; i++) {
+			res *= m1[i][i];
+		}
+		res = Math.round(res * 10000) / 10000;
+		return res;
+	}
+
+	static exp(m1, ind) {
+		if (!(this.square)) { console.error('Invalid operation'); return null}
+		var count = 1;
+		while (count < ind) {
+			m1 = this.multiply(m1);
+			count++;
+		}
+		return m1;
+	};
+
+	static cofactor(m1) {
+		let cfactArr = [];
+		for (let rs = 0; rs < m1.rowNum; rs++) {
+			for (let cs = 0; cs < m1.colNum; cs++) {
+				let minorArr = this.clone(m1);
+				minorArr.splice(rs, 1);
+				minorArr.map(function(elem){
+					elem.splice(cs, 1);
+					return elem;
+				});
+				cfactArr.push((Math.pow(-1, cs + rs)) * m1.det(minorArr));
+			}
+		}
+		return new Matrix(m1.rowNum, m1.colNum, cfactArr);
+	};
+
+	static transpose(m1) {
+		let trnArr = [];
+		for (let cls = 0; cls < m1[0].length; cls++) {
+			for (let rws = 0; rws < m1.length; rws++) {
+				trnArr.push(m1[rws][cls]);
+			}
+		}
+		return new Matrix(m1.colNum, m1.rowNum, trnArr);
+	};
+
+	static invert(m1) {
+		let det = this.determinant(m1);
+		let m2 = this.cofactor(m1);
+		m2 = this.transpose(m2);
+		m2 = this.scalarMultiply(m2, 1/det);
+
+		return m2;
+	}
+
+	static print(m1) {
+		for (let i = 0; i < m1.rowNum; i++) {
+			let str = "|";
+
+			for (let j = 0; j < m1.colNum; j++) {
+				str += m1[i][j];
+				str += " ";
+			}
+			str += "|";
+			console.log(str);
+		}
+	};
 }
 
-//Calculates certain properties of the Matrix and stores them as properties.
-Matrix.prototype.verify = function() {
-	this.square = (this.rowNum === this.colNum);
-	this.valid = !!((this.raw.length === (this.rowNum * this.colNum)) * !this.raw.some(isNaN));
-	if (!this.valid) console.error('Warning: Invalid matrix');
-};
-
-//Takes the raw array passed to the constructor, and converts it into a structured matrix.
-Matrix.prototype.genMat = function() {
-	this.raw = this.raw.map(x => +x.toFixed(6));
-	this.mat = [];
-	for (incr = 0; incr < this.rowNum; incr++) {
-		this.mat.push([]);
-		for (incr2 = 0; incr2 < this.colNum; incr2++) {
-			this.mat[incr].push(this.raw[(incr * this.colNum) + incr2]);
-		}
-	}
-};
-
-Matrix.prototype.add = function(mt) {
-	if (this.rowNum !== mt.rowNum || this.colNum !== mt.colNum) { console.error('Matrices not additively comfortable'); return null}
-	return this.mat.map(function(el, a) {
-		return el.map(function(x, b) {
-			return x + mt.mat[a][b];
-		});
-	});
-};
-
-//Takes in a second matrix as a parameter, and returns the product of the two matrices as a new matrix.
-Matrix.prototype.multiply = function(mt) {
-	if (typeof(mt) === "number") return new Matrix(this.rowNum, this.colNum, this.raw.map(x => x * mt));
-	if (this.colNum !== mt.rowNum) { console.error('Invalid multiplication'); return null}
-	var rawArr = Array(this.rowNum * mt.colNum).fill(0);
-	for (p = 0; p < this.rowNum; p++) {
-		for (q = 0; q < mt.colNum; q++) {
-			for (r = 0; r < mt.rowNum; r++) {
-				rawArr[(p * mt.colNum) + q] += (this.mat[p][r] * mt.mat[r][q]);
-			}
-		}
-	}
-	return new Matrix(this.rowNum, mt.colNum, rawArr);
-};
-
-//Returns a new matrix, which has been raised to the power of ind.
-Matrix.prototype.exp = function(ind) {
-	if (!(this.square)) { console.error('Invalid operation'); return null}
-	var count = 1;
-	m = this;
-	while (count < ind) {
-		m = this.multiply(m);
-		count++;
-	}
-	return m;
-};
-
-
-//Recursively calculates the determinant of a square matrix - takes a matrix in and outputs an integer.
-Matrix.prototype.det = function(mt = this.mat) {
-	var res = 0;
-	var rn = mt.length;
-	//Exit case for 2x2 matrix.
-	if (rn === 1) return mt[0][0];
-	if (rn === 2) return (mt[0][0] * mt[1][1]) - (mt[0][1] * mt[1][0]);
-
-
-	//Generates the matrices of minors for each element on the top row of mt.
-	for (var f = 0; f < rn; f++) {
-		var newArr = cloneArr(mt);
-		newArr.shift();
-		newArr.map(function(el) {
-			el.splice(f, 1);
-			return el;
-		});
-		//Recursively calculates the determinant of each minor matrix, adding the result to res each time.
-		res += ((f % 2 === 0) ? 1 : -1) * mt[0][f] * this.det(newArr);
-	}
-	return res;
-};
-
-Matrix.prototype.fastDet = function() {
-	var start = new Date();
-	let determinant = 1;
-	let mt = new Matrix(this.rowNum, this.colNum, this.raw);
-
-	//Iterates the row being scaled.
-	for (let i = 0; i < mt.rowNum - 1; i++) {
-		//Iterates the row being added to.
-		for (let j = i + 1; j < mt.rowNum; j++) {
-			//Iterates the element along the row being added to.
-			let t = -(mt.mat[j][i]/mt.mat[i][i]);
-			for (let k = i; k < mt.rowNum; k++) {
-				mt.mat[j][k] += t * mt.mat[i][k];
-			}
-		}
-	}
-
-	for (let l = 0; l < mt.rowNum; l++) {
-		determinant *= mt.mat[l][l];
-	}
-
-	//mt.print();
-	console.log("Time taken: " + ((new Date() - start)/1000) + "s");
-	return determinant.toFixed(6);
-};
-
-//Returns the cofactor of a matrix.
-Matrix.prototype.cfact = function() {
-	cfactArr = [];
-	for (rs = 0; rs < this.rowNum; rs++) {
-		for (cs = 0; cs < this.colNum; cs++) {
-			var minorArr = cloneArr(this.mat);
-			minorArr.splice(rs, 1);
-			minorArr.map(function(elem){
-				elem.splice(cs, 1);
-				return elem;
-			});
-			cfactArr.push((Math.pow(-1, cs + rs)) * this.det(minorArr));
-		}
-	}
-	return new Matrix(this.rowNum, this.colNum, cfactArr);
-};
-
-//Returns the transpose of a matrix.
-Matrix.prototype.trn = function() {
-	var trnArr = [];
-	for (cls = 0; cls < this.mat[0].length; cls++) {
-		for (rws = 0; rws < this.mat.length; rws++) {
-			trnArr.push(this.mat[rws][cls]);
-		}
-	}
-	return new Matrix(this.colNum, this.rowNum, trnArr);
-};
-
-//Returns the inverse of a matrix - multiplies the transpose of the cofactor matrix by the determinant.
-Matrix.prototype.inv = function() {
-	if (!this.square) { console.error('Cannot invert a non-square matrix.'); return null;}
-	if (!this.determinant) this.det();
-	return ((this.cfact()).trn()).multiply(1/this.determinant);
-};
-
-Matrix.prototype.print = function() {
-	for (let s = 0; s < this.rowNum; s++) {
-		let str = "|";
-
-		for (t = 0; t < this.colNum; t++) {
-			str += this.mat[s][t];
-			str += " ";
-		}
-		str += "|";
-		console.log(str);
-	}
-};
+let mat1 = new Matrix(3, 3, [6, 4, 23, 7, 1, 0, 3, -2, 8]);
 
 //Constructor for Identity matrices.
-function IdenMatrix(row) {
-	this.colNum = this.rowNum;
-	this.mat = [];
-	this.raw = [];
-	for (i = 0; i < row; i++) {
-		this.mat.push([]);
-		for (j = 0; j < row; j++) {
-			if (i === j) {
-				this.mat[i].push(1);
-				this.raw.push(1);
-			}
-			else {
-				this.mat[i].push(0);
-				this.raw.push(0);
-			}
+class IdentityMatrix extends Matrix {
+	constructor(size) {
+		if (typeof(size) !== 'number') {
+			console.error('Matrix size must be an integer');
 		}
+
+		let arr = new Array(size * size).fill(0);
+		for (let i = 0; i < size; i++) {
+			arr[i * size + i] = 1;
+		}
+
+		super(size, size, arr);
+
 	}
-	Matrix.call(this, row, row, this.raw);
 }
 
-IdenMatrix.prototype = Object.create(Matrix.prototype);
-IdenMatrix.prototype.constructor = IdenMatrix;
+let mat2 = new IdentityMatrix(5);
 
-
-//Constructor for Zero matrices.
-function ZeroMatrix(row, col) {
-	this.raw = [];
-	this.mat = [];
-	for (i = 0; i < row; i++) {
-		this.mat.push([]);
-		for (j = 0; j < col; j++) {
-			this.mat[i].push(0);
-			this.raw.push(0);
+class ZeroMatrix extends Matrix {
+	constructor(row, col) {
+		if (typeof(row) !== 'number') {
+			console.error('Row number must be an integer');
 		}
+		if (typeof(col) !== 'number') {
+			console.error('Column number must be an integer');
+		}
+
+		super(row, col, new Array(row * col).fill(0));
 	}
-	Matrix.call(this, row, col, this.raw);
+
 }
 
-ZeroMatrix.prototype = Object.create(Matrix.prototype);
-ZeroMatrix.prototype.constructor = ZeroMatrix;
+let mat3 = new ZeroMatrix(4, 6);
 
-//Constructor for Random Int Matrices.
-function RandomIntegerMatrix(row, col) {
-
-	this.raw = [];
-	this.mat = [];
-	for (let i = 0; i < row; i++) {
-		this.mat.push([]);
-		for (let j = 0; j < col; j++) {
-			let randInt = Math.floor(Math.random() * 100);
-			this.mat[i].push(randInt);
-			this.raw.push(randInt);
+class RandomIntegerMatrix extends Matrix {
+	constructor(row, col) {
+		if (typeof(row) !== 'number') {
+			console.error('Row number must be an integer');
 		}
+		if (typeof(col) !== 'number') {
+			console.error('Column number must be an integer');
+		}
+		let arr = [];
+		for (let i = 0; i < row * col; i++) {
+			arr.push(Math.floor(Math.random() * 100));
+		}
+
+		super(row, col, arr);
 	}
-	Matrix.call(this, row, col, this.raw);
 }
 
-RandomIntegerMatrix.prototype = Object.create(Matrix.prototype);
-RandomIntegerMatrix.prototype.constructor = RandomIntegerMatrix;
+let mat4 = new RandomIntegerMatrix(7, 22);
+
 
 
 if(helperText) {
